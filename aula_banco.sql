@@ -425,19 +425,19 @@ INNER JOIN estado est ON cdd.estado_id = est.id
 -- Listando OS em aberto
 -- -----------------------------------------------------
 SELECT
-	os.n_protocolo 'Nº PROTOCOLO' 
-	,c.nome 'CLIENTE'
-	,c.telefone 'TELEFONE'
+    os.n_protocolo 'Nº PROTOCOLO' 
+    ,c.nome 'CLIENTE'
+    ,c.telefone 'TELEFONE'
     ,e.logradouro 'LOGRADOURO'
     ,e.numero 'NÚMERO'
     ,b.nome 'BAIRRO'
     ,cid.nome 'CIDADE'
     ,est.sigla 'UF'
     ,o.nome 'OCORRÊNCIA'
-	,DATE_FORMAT(os.data_atendimento, '%d/%m/%Y') 'ABERTURA'
+    ,DATE_FORMAT(os.data_atendimento, '%d/%m/%Y') 'ABERTURA'
     ,DATE_FORMAT(os.data_agendamento, '%d/%m/%Y') 'AGENDADO'
     ,TIME_FORMAT(os.data_agendamento, '%H:%i') 'HORÁRIO'
-	,t.nome 'TÉCNICO'
+    ,t.nome 'TÉCNICO'
     ,a.nome 'ATENDENTE'
 FROM os
 INNER JOIN cliente c ON os.cliente_id = c.id
@@ -455,24 +455,26 @@ WHERE os.ativo = 'S';
 -- Listando OS dado baixa
 -- -----------------------------------------------------
 SELECT
-	os.n_protocolo 'Nº PROTOCOLO'
-	,c.nome 'CLIENTE'
-	,c.telefone 'TELEFONE'
+    os.n_protocolo 'Nº PROTOCOLO'
+    ,c.nome 'CLIENTE'
+    ,c.telefone 'TELEFONE'
     ,e.logradouro 'LOGRADOURO'
     ,e.numero 'NÚMERO'
     ,b.nome 'BAIRRO'
     ,cid.nome 'CIDADE'
     ,est.sigla 'UF'
     ,o.nome 'OCORRÊNCIA'
-	,DATE_FORMAT(os.data_atendimento, '%d/%m/%Y') 'ABERTURA'
+    ,DATE_FORMAT(os.data_atendimento, '%d/%m/%Y') 'ABERTURA'
     ,DATE_FORMAT(os.data_agendamento, '%d/%m/%Y') 'AGENDADO'
     ,TIME_FORMAT(os.data_agendamento, '%H:%i') 'HORÁRIO'
     ,DATE_FORMAT(os.data_encerramento, '%d/%m/%Y') 'ENCERRADO'
     ,TIME_FORMAT(os.data_encerramento, '%H:%i') 'HORÁRIO'
     ,os.laudo_tecnico 'LAUDO TÉCNICO'
-    ,eq.nome 'EQUIPAMENTO'
-    -- ,(SELECT GROUP_CONCAT(eq.nome separator ',') FROM equipamento eq WHERE ose.equipamento_id = eq.id) 'EQUIPAMENTO'
-	,t.nome 'TÉCNICO'
+    ,(SELECT GROUP_CONCAT(eq.nome SEPARATOR ', ') 
+    	FROM equipamento eq 
+    	INNER JOIN os_equipamento ose ON ose.os_id = os.id
+    	WHERE ose.equipamento_id = eq.id) 'EQUIPAMENTO'
+    ,t.nome 'TÉCNICO'
     ,a.nome 'ATENDENTE'
 FROM os
 INNER JOIN cliente c ON os.cliente_id = c.id
@@ -483,10 +485,7 @@ INNER JOIN cidade cid ON e.cidade_id = cid.id
 INNER JOIN bairro b ON e.bairro_id = b.id
 INNER JOIN estado est ON cid.estado_id = est.id
 INNER JOIN ocorrencia o ON os.ocorrencia_id = o.id
-LEFT JOIN os_equipamento ose ON ose.os_id = os.id -- left join traz registros da tabela da esquerda mesmo sem relacionamento com a tabela da direita
-LEFT JOIN equipamento eq ON ose.equipamento_id = eq.id
-WHERE os.ativo = 'N'
-GROUP BY eq.nome;
+WHERE os.ativo = 'N';
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -557,24 +556,23 @@ SELECT pessoa.nome, verifica_ativo_else (pessoa.ativo) FROM pessoa;
 -- Função que retorna os técnicos da mesma cidade que o 
 -- cliente.
 -- -----------------------------------------------------
-
 DELIMITER //
 CREATE FUNCTION localiza_tecnico(nome_cliente VARCHAR(50))
 RETURNS VARCHAR(50) DETERMINISTIC
 BEGIN
 	DECLARE resultado VARCHAR(50);
-		SELECT t.nome INTO resultado FROM tecnico t 
+		SELECT GROUP_CONCAT(t.nome  SEPARATOR ', ') INTO resultado FROM tecnico t 
 		JOIN endereco e ON t.endereco_id = e.id
 		JOIN cidade t_cid ON t_cid.id = e.cidade_id
 		WHERE EXISTS (
-		SELECT *
-		    FROM cliente c
-		    JOIN endereco e ON c.endereco_id = e.id
-		    JOIN cidade c_cid ON c_cid.id = e.cidade_id
-		    WHERE c.nome = nome_cliente 
-		    AND t_cid.nome = c_cid.nome 
-	    	);
-    RETURN resultado;
+			SELECT c_cid.id	
+            FROM cliente c
+            JOIN endereco e ON c.endereco_id = e.id
+            JOIN cidade c_cid ON c_cid.id = e.cidade_id
+            WHERE c.nome = nome_cliente 
+            AND t_cid.nome = c_cid.nome 
+            );
+    RETURN concat(resultado);
 END;
 //
 DELIMITER ;
