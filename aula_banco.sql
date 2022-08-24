@@ -567,13 +567,13 @@ BEGIN
 		JOIN endereco e ON t.endereco_id = e.id
 		JOIN cidade t_cid ON t_cid.id = e.cidade_id
 		WHERE EXISTS (
-			SELECT *
-            FROM cliente c
-            JOIN endereco e ON c.endereco_id = e.id
-            JOIN cidade c_cid ON c_cid.id = e.cidade_id
-            WHERE c.nome = nome_cliente 
-            AND t_cid.nome = c_cid.nome 
-            );
+		SELECT *
+		    FROM cliente c
+		    JOIN endereco e ON c.endereco_id = e.id
+		    JOIN cidade c_cid ON c_cid.id = e.cidade_id
+		    WHERE c.nome = nome_cliente 
+		    AND t_cid.nome = c_cid.nome 
+	    	);
     RETURN resultado;
 END;
 //
