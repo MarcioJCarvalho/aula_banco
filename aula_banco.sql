@@ -557,22 +557,27 @@ SELECT pessoa.nome, verifica_ativo_else (pessoa.ativo) FROM pessoa;
 -- cliente.
 -- -----------------------------------------------------
 DELIMITER //
-CREATE FUNCTION localiza_tecnico(nome_cliente VARCHAR(50))
-RETURNS VARCHAR(50) DETERMINISTIC
+CREATE FUNCTION localiza_tecnico(nome_cliente VARCHAR(60))
+RETURNS VARCHAR(60) DETERMINISTIC
 BEGIN
-	DECLARE resultado VARCHAR(50);
-		SELECT GROUP_CONCAT(t.nome  SEPARATOR ', ') INTO resultado FROM tecnico t 
-		JOIN endereco e ON t.endereco_id = e.id
-		JOIN cidade t_cid ON t_cid.id = e.cidade_id
-		WHERE EXISTS (
-			SELECT c_cid.id	
-            FROM cliente c
-            JOIN endereco e ON c.endereco_id = e.id
-            JOIN cidade c_cid ON c_cid.id = e.cidade_id
-            WHERE c.nome = nome_cliente 
-            AND t_cid.nome = c_cid.nome 
-            );
-    RETURN concat(resultado);
+	DECLARE resultado VARCHAR(60);
+	SELECT GROUP_CONCAT(t.nome  SEPARATOR ' | ') INTO resultado FROM tecnico t 
+	JOIN endereco e ON t.endereco_id = e.id
+	JOIN cidade t_cid ON t_cid.id = e.cidade_id
+	WHERE EXISTS (
+		SELECT c_cid.id	
+		FROM cliente c
+		JOIN endereco e ON c.endereco_id = e.id
+		JOIN cidade c_cid ON c_cid.id = e.cidade_id
+		WHERE c.nome = UPPER(nome_cliente) 
+		AND t_cid.nome = c_cid.nome 
+		);
+	IF resultado IS NULL THEN
+		SET resultado = 'NÃO HÁ TÉCNICOS DA MESMA CIDADE QUE O CLIENTE!';
+	ELSE
+		SET resultado = concat(resultado);
+	END IF;
+	RETURN resultado;
 END;
 //
 DELIMITER ;
