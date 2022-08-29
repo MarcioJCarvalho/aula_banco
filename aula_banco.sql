@@ -587,3 +587,34 @@ SELECT localiza_tecnico('DAVI FERNANDO ROBERTO DA CONCEIÇÃO') 'NOME TÉCNICO';
 DROP FUNCTION localiza_tecnico;
 SELECT c.nome 'CLIENTE', cdd.nome 'CIDADE' FROM cliente c JOIN endereco e ON e.id = c.endereco_id JOIN cidade cdd ON cdd.id = e.cidade_id;
 SELECT t.nome 'TÉCNICO', cdd.nome 'CIDADE' FROM tecnico t JOIN endereco e ON e.id = t.endereco_id JOIN cidade cdd ON cdd.id = e.cidade_id;
+
+-- -----------------------------------------------------
+-- Função que retorna quntidade de clientes por cidade
+-- -----------------------------------------------------
+DELIMITER //
+CREATE FUNCTION cliente_por_cidade(nome_cidade VARCHAR(60))
+RETURNS VARCHAR(60) DETERMINISTIC
+BEGIN
+	DECLARE resultado VARCHAR(60);
+	SELECT UPPER(c.nome) 'CIDADE',(
+			SELECT COUNT(cli.nome)
+            FROM cliente cli
+            JOIN endereco en ON cli.endereco_id = en.id
+            WHERE c.id = en.cidade_id
+			GROUP BY c.id
+        )'CLIENTE' FROM cidade c;
+	RETURN concat(resultado);
+END;
+//
+DELIMITER ;
+DROP FUNCTION cliente_por_cidade;
+SELECT cliente_por_cidade("boa vista");
+
+SELECT * FROM cidade;
+SELECT UPPER(c.nome) 'CIDADE',(
+			SELECT COUNT(cli.id)
+            FROM cliente cli
+            JOIN endereco en ON cli.endereco_id = en.id
+            WHERE c.id = en.cidade_id
+			GROUP BY c.id
+        )'QTD CLIENTES' FROM cidade c;
