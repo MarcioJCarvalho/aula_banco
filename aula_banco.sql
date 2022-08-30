@@ -618,3 +618,7 @@ SELECT UPPER(c.nome) 'CIDADE',(
             WHERE c.id = en.cidade_id
 			GROUP BY c.id
         )'QTD CLIENTES' FROM cidade c;
+	
+	
+	
+	criar uma função que valida qua época os equipamentos dão mais defeitos
