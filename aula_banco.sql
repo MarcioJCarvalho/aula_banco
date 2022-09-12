@@ -588,37 +588,59 @@ DROP FUNCTION localiza_tecnico;
 SELECT c.nome 'CLIENTE', cdd.nome 'CIDADE' FROM cliente c JOIN endereco e ON e.id = c.endereco_id JOIN cidade cdd ON cdd.id = e.cidade_id;
 SELECT t.nome 'TÉCNICO', cdd.nome 'CIDADE' FROM tecnico t JOIN endereco e ON e.id = t.endereco_id JOIN cidade cdd ON cdd.id = e.cidade_id;
 
--- -----------------------------------------------------
--- Função que retorna quntidade de clientes por cidade
--- -----------------------------------------------------
-DELIMITER //
-CREATE FUNCTION cliente_por_cidade(nome_cidade VARCHAR(60))
-RETURNS VARCHAR(60) DETERMINISTIC
-BEGIN
-	DECLARE resultado VARCHAR(60);
-	SELECT UPPER(c.nome) 'CIDADE',(
-			SELECT COUNT(cli.nome)
-            FROM cliente cli
-            JOIN endereco en ON cli.endereco_id = en.id
-            WHERE c.id = en.cidade_id
-			GROUP BY c.id
-        )'CLIENTE' FROM cidade c;
-	RETURN concat(resultado);
-END;
-//
-DELIMITER ;
-DROP FUNCTION cliente_por_cidade;
-SELECT cliente_por_cidade("boa vista");
 
-SELECT * FROM cidade;
-SELECT UPPER(c.nome) 'CIDADE',(
-			SELECT COUNT(cli.id)
-            FROM cliente cli
-            JOIN endereco en ON cli.endereco_id = en.id
-            WHERE c.id = en.cidade_id
-			GROUP BY c.id
-        )'QTD CLIENTES' FROM cidade c;
+-- -----------------------------------------------------
+-- Função que valida o telefone 
+-- -----------------------------------------------------
+DELIMITER ..
+CREATE FUNCTION valida_telefone (telefone VARCHAR(15))
+RETURNS BIT DETERMINISTIC
+BEGIN
+    DECLARE retorno VARCHAR(15);
+    DECLARE numero_telefone VARCHAR(15);
 	
+    -- Verifica se possui caracteres não numéricos
+    SET numero_telefone = telefone;
+    SET retorno = telefone;
+    IF telefone != numero_telefone THEN
+        SET retorno = NULL;
+	END IF;
+    -- Verifica a quantidade de digitos
+    SET numero_telefone = (CASE 
+		WHEN LENGTH(telefone) = 8 THEN telefone
+		WHEN LENGTH(telefone) = 9 THEN telefone
+		WHEN LENGTH(telefone) = 10 THEN RIGHT(telefone,8)
+		WHEN LENGTH(telefone) = 11 THEN RIGHT(telefone,9) 
+		ELSE NULL
+	END);
+    
+    -- Verifica se possui apenas números repetidos
+    IF RIGHT(numero_telefone, 11) IN (
+		'99999999999',
+        '88888888888',
+        '77777777777',
+        '66666666666',
+        '55555555555',
+        '44444444444',
+        '33333333333',
+        '22222222222',
+        '11111111111',
+        '00000000000') THEN
+        SET retorno = NULL;
+    END IF;    
+    -- Verifica se é string vazia
+    IF numero_telefone IS NULL THEN
+		SET retorno = NULL;
+    END IF;
+    
+    RETURN retorno;
 	
-	
-	criar uma função que valida qua época os equipamentos dão mais defeitos
+END;
+..
+DELIMITER ;
+
+
+DROP FUNCTION valida_telefone;
+INSERT INTO atendente (nome, cpf, telefone, endereco_id)
+VALUES ('EDSON LEANDRO THALES ALMEIDA', '82055923652', valida_telefone('98536182701'), 10);
+SELECT * FROM atendente;
