@@ -600,10 +600,12 @@ BEGIN
     DECLARE numero_telefone VARCHAR(15);
 	
     -- Verifica se possui caracteres não numéricos
-    SET numero_telefone = telefone;
+    SET numero_telefone = recupera_numero(telefone);
     SET retorno = telefone;
     IF telefone != numero_telefone THEN
-        SET retorno = NULL;
+		BEGIN
+			SET retorno = NULL;
+		END;
 	END IF;
     -- Verifica a quantidade de digitos
     SET numero_telefone = (CASE 
@@ -626,11 +628,15 @@ BEGIN
         '22222222222',
         '11111111111',
         '00000000000') THEN
-        SET retorno = NULL;
+        BEGIN
+			SET retorno = NULL;
+		END;
     END IF;    
     -- Verifica se é string vazia
     IF numero_telefone IS NULL THEN
-		SET retorno = NULL;
+		BEGIN
+			SET retorno = NULL;
+		END;
     END IF;
     
     RETURN retorno;
@@ -639,7 +645,36 @@ END;
 ..
 DELIMITER ;
 
+DELIMITER //
 
+-- -----------------------------------------------------
+-- Função que auxilia o validador de telefone
+-- -----------------------------------------------------
+CREATE FUNCTION recupera_numero (str VARCHAR(500))
+RETURNS VARCHAR(500) DETERMINISTIC
+BEGIN  
+    DECLARE startingIndex INT;  
+    SET startingIndex = 0;  
+    repetir: WHILE 1 = 1 DO
+		BEGIN  
+			SET startingIndex = INSTR('%[^0-9]%', str);  
+			IF startingIndex <> 0 THEN
+				BEGIN
+					SET str = REPLACE(str, SUBSTRING(str, startingIndex, 1), '');  
+                END;
+			ELSE
+				BEGIN
+					LEAVE repetir;
+                END;
+			END IF;
+		END; 
+	END WHILE;
+    RETURN str;  
+END;
+//
+DELIMITER ;
+
+DROP FUNCTION recupera_numero;
 DROP FUNCTION valida_telefone;
 INSERT INTO atendente (nome, cpf, telefone, endereco_id)
 VALUES ('EDSON LEANDRO THALES ALMEIDA', '82055923652', valida_telefone('98536182701'), 10);
