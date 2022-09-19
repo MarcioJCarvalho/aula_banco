@@ -102,19 +102,8 @@ END;
 //
 DELIMITER ;
 
-DROP FUNCTION verifica_total;
-DESCRIBE compra;
-SELECT p.valor 'VALOR', c.desconto 'DESCONTO', c.acrescimo 'ACRESCIMO', c.total 'TOTAL'
-FROM pagamento p
-JOIN compra c ON c.FPAGAMENTO_ID = p.ID
-WHERE p.ID = 1; 
-
-INSERT INTO compra(TIPO, FORNECEDOR_ID, FUNCIONARIO_ID, FPAGAMENTO_ID, DESCONTO, ACRESCIMO, TOTAL)
-VALUES('PA', 1, 1, 1, 10.00, 2.00, -2.00);
-
 SELECT verifica_total(2);
-SELECT  DESCONTO - (DESCONTO + ACRESCIMO) FROM COMPRA WHERE ID = 1;
-SELECT  TOTAL FROM COMPRA WHERE ID = 1;
+
 
 
 -- --------------------------------------------------------
